@@ -1,0 +1,32 @@
+{
+  "name": "oauth2-handler",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "co": "^4.6.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.0.0",
+    "@types/mocha": "^2.2.41",
+    "@types/sinon": "^2.3.1",
+    "chai": "^4.0.2",
+    "mocha": "^3.4.2",
+    "sinon": "^2.3.5"
+  },
+  "scripts": {
+    "start": "tsc & node ./src/app.js",
+    "test": "tsc & mocha ./src/**/*.test.js",
+    "cover": "tsc & istanbul cover node_modules/mocha/bin/_mocha --root ./src ./src/**/*.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/barend-erasmus/oauth2-handler.git"
+  },
+  "author": "Barend Erasmus",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/barend-erasmus/oauth2-handler/issues"
+  },
+  "homepage": "https://github.com/barend-erasmus/oauth2-handler#readme"
+}
