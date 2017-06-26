@@ -42,12 +42,12 @@ export class Handler {
 
             // Validate redirect uri
             if (client.redirectUris.indexOf(redirectUri) === -1) {
-                throw new Error('Invalid redirect uri')
+                throw new Error('Invalid redirect uri');
             }
 
             // Validate scopes
             if (scopes.map((x) => client.scopes.indexOf(x)).filter((x) => x === -1).length !== 0) {
-                throw new Error('Invalid scope(s)')
+                throw new Error('Invalid scope(s)');
             }
 
             const user: User = yield self.getUser(clientId, username, password);
@@ -59,7 +59,7 @@ export class Handler {
 
             // Validate scopes
             if (scopes.map((x) => user.scopes.indexOf(x)).filter((x) => x === -1).length !== 0) {
-                throw new Error('Invalid scope(s)')
+                throw new Error('Invalid scope(s)');
             }
 
             const authCode: AuthCode = new AuthCode(self.generateAuthCode(), self.authCodeLifetimeInSeconds, state, new Date());
@@ -94,7 +94,7 @@ export class Handler {
 
             // Validate redirect uri
             if (client.redirectUris.indexOf(redirectUri) === -1) {
-                throw new Error('Invalid redirect uri')
+                throw new Error('Invalid redirect uri');
             }
 
             const model: Model = yield self.getModelByAuthCode(code);
@@ -110,7 +110,7 @@ export class Handler {
 
             // Validate redirect uri
             if (model.redirectUri !== redirectUri) {
-                throw new Error('Invalid redirect uri')
+                throw new Error('Invalid redirect uri');
             }
 
             // Validate code
