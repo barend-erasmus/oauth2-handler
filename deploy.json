@@ -1,0 +1,37 @@
+{
+    "machine": {
+        "host": "$host",
+        "username": "$username",
+        "password": "$password"
+    },
+    "commands": [
+        "sudo apt-get update",
+        "curl -sL https://deb.nodesource.com/setup_7.x | sudo -E bash -",
+        "sudo apt-get install -y nodejs",
+
+        "npm --prefix /opt/oauth2-handler install",
+        "docker stop oauth2-handler",
+        "docker rm oauth2-handler",
+        "docker stop oauth2-handler-db",
+        "docker rm oauth2-handler-db",
+        "docker build --no-cache -t oauth2-handler /docker-uploads/oauth2-handler",
+        "docker run --name oauth2-handler-db -d mongo",
+        "docker run -d -p 8080:3000 --name oauth2-handler -v /logs:/logs -v /opt/oauth2-handler:/opt/oauth2-handler --link oauth2-handler-db:mongo -t oauth2-handler"
+    ],
+    "directories": [
+        {
+            "source": "$workspace/src",
+            "destination": "/opt/oauth2-handler/src"
+        }
+    ],
+    "files": [
+        {
+            "source": "$workspace/package.json",
+            "destination": "/opt/oauth2-handler/package.json"
+        },
+        {
+            "source": "$workspace/Dockerfile",
+            "destination": "/docker-uploads/oauth2-handler/Dockerfile"
+        }
+    ]
+}

@@ -1,5 +1,5 @@
 // Imports
-import * as uuid from 'uuid';
+import { TokenGenerator } from './../../token-generator';
 
 // Imports responses
 import { AuthorizationResponse } from './../responses/authorization';
@@ -11,13 +11,13 @@ export class AuthorizationRequest {
         public redirect_uri: string,
         public scope: string,
         public state: string,
-        public created_at: number
+        public created_at: number,
     ) {
 
     }
 
     public toResponse(): AuthorizationResponse {
-        return new AuthorizationResponse(uuid.v4(), this.state, new Date().getTime());
+        return new AuthorizationResponse(TokenGenerator.generate(), this.state, new Date().getTime());
     }
 
     public hasExpiried(expiryInSeconds: number): boolean {
@@ -37,5 +37,22 @@ export class AuthorizationRequest {
         if (!this.redirect_uri) {
             throw new Error('Invalid redirect_uri');
         }
+    }
+
+    public toJson(): any {
+        return {
+            response_type: this.response_type,
+            client_id: this.client_id,
+            redirect_uri: this.redirect_uri,
+            scope: this.scope,
+            state: this.state,
+            created_at: this.created_at,
+        };
+    }
+
+    public static fromJson(json: AuthorizationRequest): AuthorizationRequest {
+        const item = new AuthorizationRequest(json.response_type, json.client_id, json.redirect_uri, json.scope, json.state, json.created_at);
+
+        return item;
     }
 }

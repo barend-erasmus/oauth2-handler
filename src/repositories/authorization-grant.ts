@@ -1,38 +1,85 @@
 // Imports
+import * as co from 'co';
+import * as mongo from 'mongodb';
+
+// Imports models
 import { AuthorizationGrant } from './../models/grants/authorization';
 
 export class AuthorizationGrantRepository {
 
-    private static authorizationGrants: AuthorizationGrant[] = [];
+    private mongoUri: string = 'mongodb://mongo:27017/oauth2_handler';
 
     public findByAuthorizationResponseCode(code: string): Promise<AuthorizationGrant> {
-        const item: AuthorizationGrant = AuthorizationGrantRepository.authorizationGrants.filter((x) => x.authorizationResponse).find((x) => x.authorizationResponse.code === code);
-        return Promise.resolve(item);
+        const self = this;
+
+        return co(function* () {
+            const db: mongo.Db = yield mongo.MongoClient.connect(self.mongoUri);
+
+            const collection: mongo.Collection = db.collection('authorization_grants');
+
+            const json: AuthorizationGrant = yield collection.findOne({
+                'authorizationResponse.code': code
+                ,
+            });
+
+            return json ? AuthorizationGrant.fromJson(json) : null;
+        });
     }
 
     public findById(id: string): Promise<AuthorizationGrant> {
-        const item: AuthorizationGrant = AuthorizationGrantRepository.authorizationGrants.find((x) => x.id === id);
-        return Promise.resolve(item);
+        const self = this;
+
+        return co(function* () {
+            const db: mongo.Db = yield mongo.MongoClient.connect(self.mongoUri);
+
+            const collection: mongo.Collection = db.collection('authorization_grants');
+
+            const json: AuthorizationGrant = yield collection.findOne({
+                id,
+            });
+
+            return json ? AuthorizationGrant.fromJson(json) : null;
+        });
     }
 
     public findByTokenResponseAccessToken(access_token: string): Promise<AuthorizationGrant> {
-        const item: AuthorizationGrant = AuthorizationGrantRepository.authorizationGrants.filter((x) => x.tokenResponse).find((x) => x.tokenResponse.access_token === access_token);
-        return Promise.resolve(item);
+        const self = this;
+
+        return co(function* () {
+            const db: mongo.Db = yield mongo.MongoClient.connect(self.mongoUri);
+
+            const collection: mongo.Collection = db.collection('authorization_grants');
+
+            const json: AuthorizationGrant = yield collection.findOne({
+                'tokenResponse.access_token': access_token,
+            });
+
+            return json ? AuthorizationGrant.fromJson(json) : null;
+        });
     }
 
     public save(authorizationGrant: AuthorizationGrant): Promise<boolean> {
-        const item: AuthorizationGrant = AuthorizationGrantRepository.authorizationGrants.filter((x) => x.authorizationResponse).find((x) => x.id === authorizationGrant.id);
+        const self = this;
 
-        if (item) {
-            item.authorizationRequest = authorizationGrant.authorizationRequest;
-            item.authorizationResponse = authorizationGrant.authorizationResponse;
-            item.tokenRequest = authorizationGrant.tokenRequest;
-            item.tokenResponse = authorizationGrant.tokenResponse;
-            item.user = authorizationGrant.user;
-        } else {
-            AuthorizationGrantRepository.authorizationGrants.push(authorizationGrant);
-        }
+        return co(function* () {
 
-        return Promise.resolve(true);
+            const db: mongo.Db = yield mongo.MongoClient.connect(self.mongoUri);
+
+            const collection: mongo.Collection = db.collection('authorization_grants');
+
+            const item: AuthorizationGrant = yield collection.findOne({
+                id: authorizationGrant.id,
+            });
+
+            if (item) {
+                const a = yield collection.updateOne({
+                    id: authorizationGrant.id
+                }, authorizationGrant.toJson());
+            } else {
+                yield collection.insertOne(authorizationGrant.toJson());
+            }
+
+            return true;
+        });
     }
 }

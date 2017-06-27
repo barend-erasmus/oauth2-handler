@@ -3,12 +3,12 @@ import * as co from 'co';
 import * as uuid from 'uuid';
 
 // Imports models
+import { Client } from './../models/client';
 import { AuthorizationGrant } from './../models/grants/authorization';
 import { AuthorizationRequest } from './../models/requests/authorization';
 import { TokenRequest } from './../models/requests/token';
 import { AuthorizationResponse } from './../models/responses/authorization';
 import { TokenResponse } from './../models/responses/token';
-import { Client } from './../models/client';
 
 // Imports repositories
 import { AuthorizationGrantRepository } from './../repositories/authorization-grant';
@@ -26,7 +26,7 @@ export class AuthorizationGrantService {
     public create(response_type: string, client_id: string, redirect_uri: string, scope: string, state: string): Promise<AuthorizationGrant> {
         const self = this;
 
-        return co(function* () {
+        return co(function*() {
 
             const client: Client = yield self.clientRepository.findById(client_id);
 
@@ -54,12 +54,12 @@ export class AuthorizationGrantService {
         });
     }
 
-    public setAuthorizationResponse(authorizationGrantId: string, user: any): Promise<AuthorizationGrant> {
+    public setAuthorizationResponse(id: string, user: any): Promise<AuthorizationGrant> {
 
         const self = this;
 
-        return co(function* () {
-            const authorizationGrant: AuthorizationGrant = yield self.authorizationGrantRepository.findById(authorizationGrantId);
+        return co(function*() {
+            const authorizationGrant: AuthorizationGrant = yield self.authorizationGrantRepository.findById(id);
 
             if (!authorizationGrant) {
                 throw new Error('Invalid id');
@@ -81,7 +81,7 @@ export class AuthorizationGrantService {
 
         const self = this;
 
-        return co(function* () {
+        return co(function*() {
             const authorizationGrant: AuthorizationGrant = yield self.authorizationGrantRepository.findByAuthorizationResponseCode(code);
 
             if (!authorizationGrant) {
@@ -100,14 +100,16 @@ export class AuthorizationGrantService {
 
             authorizationGrant.tokenResponse.validate();
 
+            yield self.authorizationGrantRepository.save(authorizationGrant);
+
             return authorizationGrant;
         });
     }
 
-    public get(access_token: string): Promise<any> {
+    public getByAccessToken(access_token: string): Promise<any> {
         const self = this;
 
-        return co(function* () {
+        return co(function*() {
             const authorizationGrant: AuthorizationGrant = yield self.authorizationGrantRepository.findByTokenResponseAccessToken(access_token);
 
             if (!authorizationGrant) {
@@ -124,10 +126,24 @@ export class AuthorizationGrantService {
         });
     }
 
+    public getById(id: string): Promise<any> {
+        const self = this;
+
+        return co(function*() {
+            const authorizationGrant: AuthorizationGrant = yield self.authorizationGrantRepository.findById(id);
+
+            if (!authorizationGrant) {
+                throw new Error('Invalid id');
+            }
+
+            return authorizationGrant;
+        });
+    }
+
     public validateToken(access_token: string): Promise<boolean> {
         const self = this;
 
-        return co(function* () {
+        return co(function*() {
             const authorizationGrant: AuthorizationGrant = yield self.authorizationGrantRepository.findByTokenResponseAccessToken(access_token);
 
             if (!authorizationGrant) {

@@ -3,7 +3,7 @@ export class Client {
         public name: string,
         public id: string,
         public secret: string,
-        public redirectUris: string[]
+        public redirectUris: string[],
     ) {
 
     }
