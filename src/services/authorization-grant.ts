@@ -8,13 +8,16 @@ import { AuthorizationRequest } from './../models/requests/authorization';
 import { TokenRequest } from './../models/requests/token';
 import { AuthorizationResponse } from './../models/responses/authorization';
 import { TokenResponse } from './../models/responses/token';
+import { Client } from './../models/client';
 
 // Imports repositories
 import { AuthorizationGrantRepository } from './../repositories/authorization-grant';
+import { ClientRepository } from './../repositories/client';
 
 export class AuthorizationGrantService {
 
     private authorizationGrantRepository: AuthorizationGrantRepository = new AuthorizationGrantRepository();
+    private clientRepository: ClientRepository = new ClientRepository();
 
     constructor() {
 
@@ -24,9 +27,22 @@ export class AuthorizationGrantService {
         const self = this;
 
         return co(function* () {
+
+            const client: Client = yield self.clientRepository.findById(client_id);
+
+            if (!client) {
+                throw new Error('Invalid client_id');
+            }
+
+            if (client.redirectUris.indexOf(redirect_uri) === -1) {
+                throw new Error('Invalid redirect_uri');
+            }
+
             const authorizationGrant = new AuthorizationGrant(uuid.v4(), 60, 60);
 
             authorizationGrant.authorizationRequest = new AuthorizationRequest(response_type, client_id, redirect_uri, scope, state, new Date().getTime());
+
+            authorizationGrant.authorizationRequest.validate();
 
             if (authorizationGrant.authorizationRequest.hasExpiried(60)) {
                 throw new Error('authorizationRequest has expired');
@@ -53,18 +69,24 @@ export class AuthorizationGrantService {
 
             authorizationGrant.authorizationResponse = authorizationGrant.authorizationRequest.toResponse();
 
+            authorizationGrant.authorizationResponse.validate();
+
             yield self.authorizationGrantRepository.save(authorizationGrant);
 
             return authorizationGrant;
         });
     }
 
-    public getTokenResponse(grant_type: string, client_id: string, client_secret: string, code: string, redirect_uri: string): Promise<TokenResponse> {
+    public setTokenResponse(grant_type: string, client_id: string, client_secret: string, code: string, redirect_uri: string): Promise<AuthorizationGrant> {
 
         const self = this;
 
         return co(function* () {
             const authorizationGrant: AuthorizationGrant = yield self.authorizationGrantRepository.findByAuthorizationResponseCode(code);
+
+            if (!authorizationGrant) {
+                throw new Error('Invalid code');
+            }
 
             authorizationGrant.tokenRequest = new TokenRequest(grant_type, client_id, client_secret, code, redirect_uri, new Date().getTime());
 
@@ -76,7 +98,29 @@ export class AuthorizationGrantService {
 
             authorizationGrant.tokenResponse = authorizationGrant.tokenRequest.toResponse();
 
-            return authorizationGrant.tokenResponse;
+            authorizationGrant.tokenResponse.validate();
+
+            return authorizationGrant;
+        });
+    }
+
+    public get(access_token: string): Promise<any> {
+        const self = this;
+
+        return co(function* () {
+            const authorizationGrant: AuthorizationGrant = yield self.authorizationGrantRepository.findByTokenResponseAccessToken(access_token);
+
+            if (!authorizationGrant) {
+                throw new Error('Invalid access_token');
+            }
+
+            authorizationGrant.tokenRequest.validate();
+
+            if (authorizationGrant.tokenResponse.hasExpiried(authorizationGrant.tokenResponseExpiry)) {
+                throw new Error('tokenResponse has expired');
+            }
+
+            return authorizationGrant.user;
         });
     }
 
@@ -85,6 +129,10 @@ export class AuthorizationGrantService {
 
         return co(function* () {
             const authorizationGrant: AuthorizationGrant = yield self.authorizationGrantRepository.findByTokenResponseAccessToken(access_token);
+
+            if (!authorizationGrant) {
+                throw new Error('Invalid access_token');
+            }
 
             try {
                 authorizationGrant.tokenRequest.validate();
