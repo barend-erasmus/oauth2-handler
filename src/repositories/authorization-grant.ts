@@ -12,7 +12,7 @@ export class AuthorizationGrantRepository {
     public findByAuthorizationResponseCode(code: string): Promise<AuthorizationGrant> {
         const self = this;
 
-        return co(function* () {
+        return co(function*() {
             const db: mongo.Db = yield mongo.MongoClient.connect(self.mongoUri);
 
             const collection: mongo.Collection = db.collection('authorization_grants');
@@ -29,7 +29,7 @@ export class AuthorizationGrantRepository {
     public findById(id: string): Promise<AuthorizationGrant> {
         const self = this;
 
-        return co(function* () {
+        return co(function*() {
             const db: mongo.Db = yield mongo.MongoClient.connect(self.mongoUri);
 
             const collection: mongo.Collection = db.collection('authorization_grants');
@@ -45,7 +45,7 @@ export class AuthorizationGrantRepository {
     public findByTokenResponseAccessToken(access_token: string): Promise<AuthorizationGrant> {
         const self = this;
 
-        return co(function* () {
+        return co(function*() {
             const db: mongo.Db = yield mongo.MongoClient.connect(self.mongoUri);
 
             const collection: mongo.Collection = db.collection('authorization_grants');
@@ -61,7 +61,7 @@ export class AuthorizationGrantRepository {
     public save(authorizationGrant: AuthorizationGrant): Promise<boolean> {
         const self = this;
 
-        return co(function* () {
+        return co(function*() {
 
             const db: mongo.Db = yield mongo.MongoClient.connect(self.mongoUri);
 
@@ -74,7 +74,7 @@ export class AuthorizationGrantRepository {
             if (item) {
                 const a = yield collection.updateOne({
                     id: authorizationGrant.id
-                }, authorizationGrant.toJson());
+  ,              }, authorizationGrant.toJson());
             } else {
                 yield collection.insertOne(authorizationGrant.toJson());
             }

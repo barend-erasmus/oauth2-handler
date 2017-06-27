@@ -18,7 +18,7 @@ export class ClientService {
     public get(client_id: string): Promise<Client> {
         const self = this;
 
-        return co(function* () {
+        return co(function*() {
             const client: Client = yield self.clientRepository.findById(client_id);
 
             if (!client) {

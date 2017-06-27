@@ -27,20 +27,20 @@ export class AuthorizationGrant {
             id: this.id,
             authorizationResponseExpiry: this.authorizationResponseExpiry,
             tokenResponseExpiry: this.tokenResponseExpiry,
-            authorizationRequest: this.authorizationRequest? this.authorizationRequest.toJson() : null,
-            authorizationResponse: this.authorizationResponse? this.authorizationResponse.toJson() : null,
-            tokenRequest: this.tokenRequest? this.tokenRequest.toJson() : null,
-            tokenResponse: this.tokenResponse? this.tokenResponse.toJson() : null,
+            authorizationRequest: this.authorizationRequest ? this.authorizationRequest.toJson() : null,
+            authorizationResponse: this.authorizationResponse ? this.authorizationResponse.toJson() : null,
+            tokenRequest: this.tokenRequest ? this.tokenRequest.toJson() : null,
+            tokenResponse: this.tokenResponse ? this.tokenResponse.toJson() : null,
             user: this.user,
         };
     }
 
     public static fromJson(json: AuthorizationGrant): AuthorizationGrant {
         const item = new AuthorizationGrant(json.id, json.authorizationResponseExpiry, json.tokenResponseExpiry);
-        item.authorizationRequest = json.authorizationRequest? AuthorizationRequest.fromJson(json.authorizationRequest) : null;
-        item.authorizationResponse = json.authorizationResponse? AuthorizationResponse.fromJson(json.authorizationResponse) : null;
-        item.tokenRequest = json.tokenRequest? TokenRequest.fromJson(json.tokenRequest) : null;
-        item.tokenResponse = json.tokenResponse? TokenResponse.fromJson(json.tokenResponse) : null;
+        item.authorizationRequest = json.authorizationRequest ? AuthorizationRequest.fromJson(json.authorizationRequest) : null;
+        item.authorizationResponse = json.authorizationResponse ? AuthorizationResponse.fromJson(json.authorizationResponse) : null;
+        item.tokenRequest = json.tokenRequest ? TokenRequest.fromJson(json.tokenRequest) : null;
+        item.tokenResponse = json.tokenResponse ? TokenResponse.fromJson(json.tokenResponse) : null;
         item.user = json.user;
 
         return item;

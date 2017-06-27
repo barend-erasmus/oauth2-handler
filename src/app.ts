@@ -1,3 +1,5 @@
+// tslint --fix --exclude \"./src/**/[config|swagger]*.*\" ./src/**/*.ts
+
 // Imports
 import * as co from 'co';
 import * as express from 'express';
@@ -32,13 +34,9 @@ const clientService: ClientService = new ClientService();
 const logger = new (winston.Logger)({
     transports: [
         new (winston.transports.Console)({ level: 'debug' }),
-        // new (winston.transports.File)({
-        //     filename: path.join(__dirname, 'requests.log'),
-        //     level: 'debug',
-        // }),
         new (winston.transports.File)({
-            filename: path.join(__dirname, 'errors.log'),
-            level: 'error',
+            filename: path.join(__dirname, 'requests.log'),
+            level: 'debug',
         }),
     ],
 });
@@ -47,10 +45,10 @@ const logger = new (winston.Logger)({
 app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(expressWinston.logger({
-    winstonInstance: logger,
-    meta: false,
+app.use(expressWinston.logger({  
     msg: 'HTTP Request: {{res.statusCode}} {{req.method}} {{res.responseTime}}ms {{req.url}}',
+    meta: false,
+    winstonInstance: logger,
 }));
 
 // Constants
@@ -63,7 +61,6 @@ app.get('/', (req: express.Request, res: express.Response) => {
 });
 
 app.get('/login', jwt({
-    secret: jwtSecretPublic,
     credentialsRequired: false,
     getToken: function fromHeaderOrQuerystring(req) {
         if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
@@ -74,18 +71,20 @@ app.get('/login', jwt({
             return req.cookies.token;
         }
         return null;
-    }
-    ,
+    },
+    secret: jwtSecretPublic,
 }), (req: express.Request, res: express.Response) => {
-    co(function* () {
+    co(function*() {
 
         if (!req.query.id) {
             res.send('Require id');
             return;
         }
 
-        if (req['user']) {
-            const authorizationGrant: AuthorizationGrant = yield authorizationGrantService.setAuthorizationResponse(req.query.id, req['user'].user);
+        const user = req['user'] ? req['user'].user : null;
+
+        if (user) {
+            const authorizationGrant: AuthorizationGrant = yield authorizationGrantService.setAuthorizationResponse(req.query.id, user);
 
             res.redirect(`${authorizationGrant.authorizationRequest.redirect_uri}?code=${authorizationGrant.authorizationResponse.code}&state=${authorizationGrant.authorizationResponse.state}`);
             return;
@@ -96,8 +95,8 @@ app.get('/login', jwt({
 
             renderPage(res, loginPagePath, {
                 id: req.query.id,
-                name: client.name,
                 message: null,
+                name: client.name,
             }, 200);
             return;
         }
@@ -108,7 +107,7 @@ app.get('/login', jwt({
 });
 
 app.post('/login', (req: express.Request, res: express.Response) => {
-    co(function* () {
+    co(function*() {
 
         if (!req.query.id) {
             res.send('Require id');
@@ -120,9 +119,8 @@ app.post('/login', (req: express.Request, res: express.Response) => {
         if (!isCredentialsValid) {
             renderPage(res, path.join(__dirname, 'index.html'), {
                 id: req.query.id,
+                message: 'Invalid credentials',
                 name: 'Euromonitor',
-                message: 'Invalid credentials'
-                ,
             }, 200);
             return;
         }
@@ -147,9 +145,8 @@ app.post('/login', (req: express.Request, res: express.Response) => {
 
             renderPage(res, path.join(__dirname, 'index.html'), {
                 id: req.query.id,
+                message: null,
                 name: client.name,
-                message: null
-                ,
             }, 200);
             return;
         }
@@ -161,7 +158,7 @@ app.post('/login', (req: express.Request, res: express.Response) => {
 
 app.get('/authorize', (req: express.Request, res: express.Response) => {
 
-    co(function* () {
+    co(function*() {
         if (req.query.response_type === 'code') {
             const authorizationGrant: AuthorizationGrant = yield authorizationGrantService.create(req.query.response_type, req.query.client_id, req.query.redirect_uri, req.query.scope, req.query.state);
 
@@ -178,7 +175,7 @@ app.get('/authorize', (req: express.Request, res: express.Response) => {
 
 app.get('/token', (req: express.Request, res: express.Response) => {
 
-    co(function* () {
+    co(function*() {
         if (req.query.grant_type === 'authorization_code') {
             const authorizationGrant: AuthorizationGrant = yield authorizationGrantService.setTokenResponse(req.query.grant_type, req.query.client_id, req.query.client_secret, req.query.code, req.query.redirect_uri);
 
@@ -194,7 +191,7 @@ app.get('/token', (req: express.Request, res: express.Response) => {
 });
 
 app.get('/user', (req: express.Request, res: express.Response) => {
-    co(function* () {
+    co(function*() {
 
         if (!req.get('Authorization') || req.get('Authorization').split(' ')[0] !== 'Bearer') {
             throw new Error('Invalid header');
@@ -218,7 +215,7 @@ app.get('/passport/callback', (req: express.Request, res: express.Response) => {
     const redirect_uri = 'http://localhost:3000/passport/callback';
     const trinityApiUri = 'http://trinity.euromonitor.com';
 
-    co(function* () {
+    co(function*() {
         const response1 = yield request({
             method: 'GET',
             uri: `http://localhost:3000/token?client_id=${client_id}&client_secret=${client_secret}&grant_type=authorization_code&code=${req.query.code}&redirect_uri=${redirect_uri}`,
@@ -237,10 +234,10 @@ app.get('/passport/callback', (req: express.Request, res: express.Response) => {
             method: 'GET',
             uri: `http://localhost:3000/user`,
             headers: {
-                Authorization: `Bearer ${response1.body.access_token}`
+                Authorization: `Bearer ${response1.body.access_token}`,
             },
             json: true,
-            resolveWithFullResponse: true
+            resolveWithFullResponse: true,
         });
 
         if (response2.statusCode !== 200) {
@@ -256,10 +253,10 @@ app.get('/passport/callback', (req: express.Request, res: express.Response) => {
             body: {
                 SubscriberId: req.query.state,
                 Username: `EURO_NT\\${response2.body.username}`,
-                ApplicationId: 1
+                ApplicationId: 1,
             },
             json: true,
-            resolveWithFullResponse: true
+            resolveWithFullResponse: true,
         });
 
         if (response3.statusCode !== 200) {
@@ -279,14 +276,14 @@ app.get('/passport/callback', (req: express.Request, res: express.Response) => {
 });
 
 function validateCredentials(username: string, password: string): Promise<boolean> {
-    return new Promise((resolve: Function, reject: Function) => {
+    return new Promise((resolve: (result: boolean) => void, reject: (err: Error) => void) => {
 
         const configuration = {
             url: 'ldap://EUROCT1.euromonitor.local',
             baseDN: 'dc=euromonitor,dc=local',
             username: `${username}@euromonitor.local`,
-            password: password
-        }
+            password,
+        };
 
         const ad = new ActiveDirectory(configuration);
 
@@ -320,5 +317,5 @@ function renderPage(res: express.Response, htmlFile: string, data: any, status: 
 }
 
 app.listen(3000, () => {
-
+    logger.info('listing');
 });
