@@ -46,7 +46,7 @@ const logger = new (winston.Logger)({
 app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(expressWinston.logger({  
+app.use(expressWinston.logger({
     msg: 'HTTP Request: {{res.statusCode}} {{req.method}} {{res.responseTime}}ms {{req.url}}',
     meta: false,
     winstonInstance: logger,
