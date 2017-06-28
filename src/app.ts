@@ -1,4 +1,5 @@
 // tslint --fix --exclude \"./src/**/[config|swagger]*.*\" ./src/**/*.ts
+// http://localhost:3000/authorize?response_type=code&client_id=969fbcb3-7202-4f4b-a56e-b44f244ce48c&redirect_uri=http://localhost:3000/passport/callback&scope=read&state=40335
 
 // Imports
 import * as co from 'co';
@@ -117,10 +118,15 @@ app.post('/login', (req: express.Request, res: express.Response) => {
         const isCredentialsValid: boolean = yield validateCredentials(req.body.username, req.body.password);
 
         if (!isCredentialsValid) {
-            renderPage(res, path.join(__dirname, 'index.html'), {
+
+            const authorizationGrant: AuthorizationGrant = yield authorizationGrantService.getById(req.query.id);
+
+            const client: Client = yield clientService.get(authorizationGrant.authorizationRequest.client_id);
+
+            renderPage(res, path.join(__dirname, 'login.html'), {
                 id: req.query.id,
                 message: 'Invalid credentials',
-                name: 'Euromonitor',
+                name: client.name,
             }, 200);
             return;
         }
@@ -304,6 +310,7 @@ function renderPage(res: express.Response, htmlFile: string, data: any, status: 
 
     fs.readFile(htmlFile, 'utf8', (err: Error, html: string) => {
         if (err) {
+            res.status(400).send(err.message);
             return;
         }
 
@@ -317,5 +324,5 @@ function renderPage(res: express.Response, htmlFile: string, data: any, status: 
 }
 
 app.listen(3000, () => {
-    logger.info('listing');
+    logger.info('listening');
 });
