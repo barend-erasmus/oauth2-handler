@@ -57,11 +57,11 @@ const jwtSecretPublic = '-----BEGIN PUBLIC KEY-----\r\nMIGeMA0GCSqGSIb3DQEBAQUAA
 const jwtSecretPrivate = '-----BEGIN RSA PRIVATE KEY-----\r\nMIICWgIBAAKBgHzwFSFvJIA1xc3t8IlYtcrKzrk8NNiluBMmertMuvp4wzgAw9r6\r\nFrbn0dbeiXkUN4oQdjltZU/+lDRfyCuVwGuZyUuhnMVCO81pQRUiOIiF1BF8ziYJ\r\nRb/1EVD72Hpyh9IV9sCH6Ev8+/zQjnxVZii5c4O1zOlgFzi7PPdo952HAgMBAAEC\r\ngYBtJbjwGo7CyzdhbmtjMfKvlXn/7Y8lbbFgWY+DLcdzpii2NkTkevN5GxEBLCzh\r\ncD4NCdCe3ulRd1C2aK8RFKSilqAUEpy2KSHR6fmzFSIpHmHUlHrF72rIPZN1g03f\r\nMWyUKMPECo6ZDJ4tiEZuqVBdgtUdjpvAUF9O5e2KAYVWUQJBAO5iyqbz8Ijds2SO\r\nq9eeboPrc3bJulr1L5OLJva8VCBTFpqWHrwXLTm0CIdVsmcV+lOBXTd/KgzIZ+ec\r\nw602ZZMCQQCGK1qzokEy2BL49P5DOAAEj3SHRs8GAvq+IpMMJontUQdTvoIFid4D\r\nTf1lgeiGUvDZj+MjjqYP35T34I2qGuC9AkBIclOeK3KFVcMoI0fMLoTtqIedqS7u\r\nZ6c+0sJTp+Z1MGslLcxHY0/GQpV4861VMNOzvxPiQs43tkwFkpnRMT/rAkBX/fT1\r\nXJNP6h+/QMXEheSVGRQ+Z/T8J1YU/o3b6SaKCps4k/en9DwzhKGMQf+ioKCuvswj\r\nlLlaLbMAQjgGeKwtAkB1sWqIx60HIz6yKe4i78AIPfA7kr04hKk+IDIJL0msT7me\r\niooQxf+mGiqYv0oZgGtTxgQ4HJtSnJaiheoNGIqK\r\n-----END RSA PRIVATE KEY-----';
 const loginPagePath = path.join(__dirname, 'login.html');
 
-app.get('/', (req: express.Request, res: express.Response) => {
+app.get('/auth', (req: express.Request, res: express.Response) => {
     res.send(req.cookies.token);
 });
 
-app.get('/login', jwt({
+app.get('/auth/login', jwt({
     credentialsRequired: false,
     getToken: function fromHeaderOrQuerystring(req) {
         if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
@@ -107,7 +107,7 @@ app.get('/login', jwt({
     });
 });
 
-app.post('/login', (req: express.Request, res: express.Response) => {
+app.post('/auth/login', (req: express.Request, res: express.Response) => {
     co(function*() {
 
         if (!req.query.id) {
@@ -162,13 +162,13 @@ app.post('/login', (req: express.Request, res: express.Response) => {
     });
 });
 
-app.get('/authorize', (req: express.Request, res: express.Response) => {
+app.get('/auth/authorize', (req: express.Request, res: express.Response) => {
 
     co(function*() {
         if (req.query.response_type === 'code') {
             const authorizationGrant: AuthorizationGrant = yield authorizationGrantService.create(req.query.response_type, req.query.client_id, req.query.redirect_uri, req.query.scope, req.query.state);
 
-            res.redirect(`/login?id=${authorizationGrant.id}`);
+            res.redirect(`/auth/login?id=${authorizationGrant.id}`);
         } else {
             res.send('Invalid response_code');
         }
@@ -179,7 +179,7 @@ app.get('/authorize', (req: express.Request, res: express.Response) => {
     });
 });
 
-app.get('/token', (req: express.Request, res: express.Response) => {
+app.get('/auth/token', (req: express.Request, res: express.Response) => {
 
     co(function*() {
         if (req.query.grant_type === 'authorization_code') {
@@ -196,7 +196,7 @@ app.get('/token', (req: express.Request, res: express.Response) => {
     });
 });
 
-app.get('/user', (req: express.Request, res: express.Response) => {
+app.get('/auth/user', (req: express.Request, res: express.Response) => {
     co(function*() {
 
         if (!req.get('Authorization') || req.get('Authorization').split(' ')[0] !== 'Bearer') {
@@ -214,17 +214,17 @@ app.get('/user', (req: express.Request, res: express.Response) => {
     });
 });
 
-app.get('/passport/callback', (req: express.Request, res: express.Response) => {
+app.get('/auth/passport/callback', (req: express.Request, res: express.Response) => {
 
-    const client_id = 'clientId';
-    const client_secret = 'clientSecret';
-    const redirect_uri = 'http://localhost:3000/passport/callback';
+    const client_id = '0mfgml8jqgpy7gpy6etlpl';
+    const client_secret = 'dpzr2ezhd0gxrz8tosq239';
+    const redirect_uri = 'http://cpt.innovation.euromonitor.local/auth/passport/callback';
     const trinityApiUri = 'http://trinity.euromonitor.com';
 
     co(function*() {
         const response1 = yield request({
             method: 'GET',
-            uri: `http://localhost:3000/token?client_id=${client_id}&client_secret=${client_secret}&grant_type=authorization_code&code=${req.query.code}&redirect_uri=${redirect_uri}`,
+            uri: `http://localhost:3000/auth/token?client_id=${client_id}&client_secret=${client_secret}&grant_type=authorization_code&code=${req.query.code}&redirect_uri=${redirect_uri}`,
             json: true,
             resolveWithFullResponse: true,
         });
@@ -238,7 +238,7 @@ app.get('/passport/callback', (req: express.Request, res: express.Response) => {
 
         const response2 = yield request({
             method: 'GET',
-            uri: `http://localhost:3000/user`,
+            uri: `http://localhost:3000/auth/user`,
             headers: {
                 Authorization: `Bearer ${response1.body.access_token}`,
             },
